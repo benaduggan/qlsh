@@ -8,6 +8,10 @@
 }:
 let
   name = "qlsh";
+  myDotnet = (with pkgs.dotnetCorePackages; combinePackages [
+    sdk_7_0
+    sdk_8_0
+  ]);
 
   tools = with pkgs; {
     cli = [
@@ -15,10 +19,7 @@ let
       nixpkgs-fmt
     ];
     dotnet = [
-      (with dotnetCorePackages; combinePackages [
-        sdk_7_0
-        sdk_8_0
-      ])
+      myDotnet
     ];
 
     scripts = [ ];
@@ -29,7 +30,15 @@ let
     inherit name paths;
     buildInputs = paths;
   };
+
 in
 env.overrideAttrs (_: {
   NIXUP = "0.0.5";
+  DOTNET_ROOT = "${myDotnet}";
+  LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath ([
+    pkgs.stdenv.cc.cc
+  ]);
+  NIX_LD = "${pkgs.stdenv.cc.libc_bin}/bin/ld.so";
+  nativeBuildInputs = [
+  ] ++ paths;
 })
